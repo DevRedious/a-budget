@@ -12,6 +12,7 @@ export default function AlertsDashboard({ darkMode }) {
       try {
         setLoading(true);
         const allProducts = await getAllBudgetProducts();
+        console.log('AlertsDashboard: Chargé', allProducts.length, 'produits');
         setProducts(allProducts);
       } catch (err) {
         console.error('Erreur fetch:', err);
@@ -21,6 +22,10 @@ export default function AlertsDashboard({ darkMode }) {
     };
 
     fetchProducts();
+
+    // Rafraîchir toutes les 3 secondes
+    const interval = setInterval(fetchProducts, 3000);
+    return () => clearInterval(interval);
   }, []);
 
   // Calculer les alertes

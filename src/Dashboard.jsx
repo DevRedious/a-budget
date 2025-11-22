@@ -6,6 +6,7 @@ import { db } from './firebase';
 import BudgetChart from './BudgetChart';
 import BudgetComparison from './BudgetComparison';
 import AlertsDashboard from './AlertsDashboard';
+import DebugInfo from './DebugInfo';
 import { importBudgetDataToFirestore } from './importBudgetData';
 
 const ITEMS_PER_PAGE = 50;
@@ -118,6 +119,7 @@ export default function Dashboard({ onImport, importing, darkMode, setDarkMode, 
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-gray-900 dark:to-gray-800">
+      <DebugInfo />
       <header className="bg-white dark:bg-gray-800 shadow-lg sticky top-0 z-50">
         <div className="max-w-7xl mx-auto px-6 py-6">
           <div className="flex items-center justify-between mb-6">
@@ -138,10 +140,15 @@ export default function Dashboard({ onImport, importing, darkMode, setDarkMode, 
                   onClick={async () => {
                     setImportingBudget(true);
                     try {
+                      console.log('🚀 Début import...');
                       await importBudgetDataToFirestore();
+                      console.log('✅ Import réussi!');
                       setBudgetImported(true);
+                      // Refresh après 2 secondes
+                      setTimeout(() => window.location.reload(), 2000);
                     } catch (err) {
-                      console.error(err);
+                      console.error('❌ Erreur import:', err);
+                      alert('Erreur: ' + err.message);
                     } finally {
                       setImportingBudget(false);
                     }
