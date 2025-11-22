@@ -1,6 +1,6 @@
 import { collection, writeBatch, doc } from 'firebase/firestore';
 import { db } from './firebase';
-import budgetData from '../data/imported_budget.json';
+import budgetData from './imported_budget.json';
 
 export async function importBudgetDataToFirestore() {
   try {

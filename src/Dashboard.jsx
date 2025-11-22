@@ -1,11 +1,12 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { Search, ChevronLeft, ChevronRight, TrendingUp, DollarSign, Package, BarChart3, Moon, Sun, LogOut, AlertTriangle } from 'lucide-react';
+import { Search, ChevronLeft, ChevronRight, TrendingUp, DollarSign, Package, BarChart3, Moon, Sun, LogOut, AlertTriangle, Download } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
 import { collection, getDocs } from 'firebase/firestore';
 import { db } from './firebase';
 import BudgetChart from './BudgetChart';
 import BudgetComparison from './BudgetComparison';
 import AlertsDashboard from './AlertsDashboard';
+import { importBudgetDataToFirestore } from './importBudgetData';
 
 const ITEMS_PER_PAGE = 50;
 const COLORS = ['#3B82F6', '#EF4444', '#10B981', '#F59E0B', '#8B5CF6', '#EC4899', '#06B6D4', '#6366F1', '#14B8A6', '#F97316'];
@@ -18,6 +19,8 @@ export default function Dashboard({ onImport, importing, darkMode, setDarkMode, 
   const [selectedFamily, setSelectedFamily] = useState(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [view, setView] = useState('overview');
+  const [importingBudget, setImportingBudget] = useState(false);
+  const [budgetImported, setBudgetImported] = useState(false);
 
   useEffect(() => {
     const fetchProducts = async () => {
@@ -130,14 +133,30 @@ export default function Dashboard({ onImport, importing, darkMode, setDarkMode, 
               </div>
             </div>
             <div className="flex gap-2 items-center">
-              {products.length === 0 && onImport && (
+              {!budgetImported && (
                 <button
-                  onClick={onImport}
-                  disabled={importing}
-                  className="px-4 py-2 rounded-lg font-medium bg-green-600 text-white hover:bg-green-700 disabled:opacity-50"
+                  onClick={async () => {
+                    setImportingBudget(true);
+                    try {
+                      await importBudgetDataToFirestore();
+                      setBudgetImported(true);
+                    } catch (err) {
+                      console.error(err);
+                    } finally {
+                      setImportingBudget(false);
+                    }
+                  }}
+                  disabled={importingBudget}
+                  className="px-4 py-2 rounded-lg font-medium bg-purple-600 text-white hover:bg-purple-700 disabled:opacity-50 flex items-center gap-2"
                 >
-                  {importing ? '⏳ Import...' : '📥 Importer 330 produits'}
+                  <Download className="w-4 h-4" />
+                  {importingBudget ? '⏳ Import budget...' : '📊 Import 330 produits'}
                 </button>
+              )}
+              {budgetImported && (
+                <div className="px-4 py-2 rounded-lg font-medium bg-green-600 text-white flex items-center gap-2">
+                  ✅ Budget importé
+                </div>
               )}
               <button
                 onClick={() => setDarkMode(!darkMode)}
