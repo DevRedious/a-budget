@@ -5,11 +5,16 @@ import { db } from './firebase';
 export async function getAllBudgetProducts() {
   try {
     const allProducts = [];
+    console.log('🔍 Début fetch familles...');
     const familles = await getDocs(collection(db, 'familles'));
+    console.log('✓ Familles trouvées:', familles.size, 'collections');
 
     for (const familleDoc of familles.docs) {
+      console.log(`🔍 Fetch produits pour famille: ${familleDoc.id}`);
       const produitsRef = collection(db, 'familles', familleDoc.id, 'produits');
       const produits = await getDocs(produitsRef);
+      console.log(`✓ ${familleDoc.id}: ${produits.size} produits trouvés`);
+
       produits.forEach(doc => {
         allProducts.push({
           id: doc.id,
@@ -19,9 +24,10 @@ export async function getAllBudgetProducts() {
       });
     }
 
+    console.log('✅ Total produits chargés:', allProducts.length);
     return allProducts;
   } catch (error) {
-    console.error('Erreur récupération produits:', error);
+    console.error('❌ Erreur récupération produits:', error);
     return [];
   }
 }

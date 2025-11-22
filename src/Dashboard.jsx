@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { Search, ChevronLeft, ChevronRight, TrendingUp, DollarSign, Package, BarChart3, Moon, Sun, LogOut, AlertTriangle, Download } from 'lucide-react';
+import { Search, ChevronLeft, ChevronRight, TrendingUp, DollarSign, Package, BarChart3, Moon, Sun, LogOut, Download } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
 import { collection, getDocs } from 'firebase/firestore';
 import { db } from './firebase';

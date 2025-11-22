@@ -1,4 +1,4 @@
-import { collection, writeBatch, doc } from 'firebase/firestore';
+import { writeBatch, doc } from 'firebase/firestore';
 import { db } from './firebase';
 import budgetData from './imported_budget.json';
 
@@ -9,6 +9,7 @@ export async function importBudgetDataToFirestore() {
     const batch = writeBatch(db);
     let batchCount = 0;
     const BATCH_SIZE = 100;
+    const familyNames = [];
 
     // Grouper par famille
     const byFamily = {};
@@ -18,9 +19,13 @@ export async function importBudgetDataToFirestore() {
       byFamily[family].push(product);
     });
 
+    console.log(`📦 ${Object.keys(byFamily).length} familles identifiées:`, Object.keys(byFamily));
+
     // Import par famille
     Object.entries(byFamily).forEach(([familyName, products]) => {
       const familyId = familyName.toLowerCase().replace(/[- ]/g, '_');
+      familyNames.push(familyId);
+      console.log(`📂 Ajout famille: ${familyId} (${products.length} produits)`);
 
       products.forEach(product => {
         const prodId = `prod_${product.prodCode}`;
@@ -81,8 +86,9 @@ export async function importBudgetDataToFirestore() {
       });
     });
 
+    console.log(`🚀 Envoi du batch avec ${batchCount} produits à Firestore...`);
     await batch.commit();
-    console.log(`✅ Import complet ! ${batchCount} produits importés`);
+    console.log(`✅ Import complet ! ${batchCount} produits importés dans familles:`, familyNames);
     return true;
   } catch (error) {
     console.error('❌ Erreur import:', error);

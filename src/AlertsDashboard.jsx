@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { AlertCircle, TrendingDown, TrendingUp, Zap } from 'lucide-react';
+import { TrendingDown, TrendingUp, Zap } from 'lucide-react';
 import { getAllBudgetProducts } from './firebaseHelpers';
 
 export default function AlertsDashboard({ darkMode }) {
