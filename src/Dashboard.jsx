@@ -1,9 +1,11 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { Search, ChevronLeft, ChevronRight, TrendingUp, DollarSign, Package, BarChart3, Moon, Sun, LogOut } from 'lucide-react';
+import { Search, ChevronLeft, ChevronRight, TrendingUp, DollarSign, Package, BarChart3, Moon, Sun, LogOut, AlertTriangle } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
 import { collection, getDocs } from 'firebase/firestore';
 import { db } from './firebase';
 import BudgetChart from './BudgetChart';
+import BudgetComparison from './BudgetComparison';
+import AlertsDashboard from './AlertsDashboard';
 
 const ITEMS_PER_PAGE = 50;
 const COLORS = ['#3B82F6', '#EF4444', '#10B981', '#F59E0B', '#8B5CF6', '#EC4899', '#06B6D4', '#6366F1', '#14B8A6', '#F97316'];
@@ -144,7 +146,7 @@ export default function Dashboard({ onImport, importing, darkMode, setDarkMode, 
               >
                 {darkMode ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
               </button>
-              {['overview', 'products', 'analytics'].map(v => (
+              {['overview', 'products', 'budget', 'alerts', 'analytics'].map(v => (
                 <button
                   key={v}
                   onClick={() => setView(v)}
@@ -152,7 +154,7 @@ export default function Dashboard({ onImport, importing, darkMode, setDarkMode, 
                     view === v ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-700 hover:bg-gray-300 dark:bg-gray-700 dark:text-gray-200 dark:hover:bg-gray-600'
                   }`}
                 >
-                  {v === 'overview' ? 'Vue' : v === 'products' ? 'Produits' : 'Analyses'}
+                  {v === 'overview' ? '📊 Vue' : v === 'products' ? '📦 Produits' : v === 'budget' ? '💰 Budget' : v === 'alerts' ? '⚠️ Alertes' : '📈 Analyses'}
                 </button>
               ))}
               {user && onLogout && (
@@ -356,6 +358,14 @@ export default function Dashboard({ onImport, importing, darkMode, setDarkMode, 
               </div>
             )}
           </div>
+        )}
+
+        {view === 'budget' && (
+          <BudgetComparison darkMode={darkMode} />
+        )}
+
+        {view === 'alerts' && (
+          <AlertsDashboard darkMode={darkMode} />
         )}
 
         {view === 'analytics' && (
