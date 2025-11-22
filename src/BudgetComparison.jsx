@@ -1,7 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { ChevronLeft, ChevronRight, TrendingUp, TrendingDown, AlertCircle } from 'lucide-react';
-import { collection, getDocs } from 'firebase/firestore';
-import { db } from './firebase';
+import { getAllBudgetProducts } from './firebaseHelpers';
 
 const ITEMS_PER_PAGE = 30;
 
@@ -16,15 +15,7 @@ export default function BudgetComparison({ darkMode }) {
     const fetchProducts = async () => {
       try {
         setLoading(true);
-        const allProducts = [];
-        const familles = await getDocs(collection(db, 'familles'));
-
-        for (const familleDoc of familles.docs) {
-          const produitsRef = collection(db, 'familles', familleDoc.id, 'produits');
-          const produits = await getDocs(produitsRef);
-          produits.forEach(doc => allProducts.push({ id: doc.id, ...doc.data() }));
-        }
-
+        const allProducts = await getAllBudgetProducts();
         setProducts(allProducts);
       } catch (err) {
         console.error('Erreur fetch:', err);
