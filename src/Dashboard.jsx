@@ -3,6 +3,7 @@ import { Search, ChevronLeft, ChevronRight, TrendingUp, DollarSign, Package, Bar
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
 import { collection, getDocs } from 'firebase/firestore';
 import { db } from './firebase';
+import BudgetChart from './BudgetChart';
 
 const ITEMS_PER_PAGE = 50;
 const COLORS = ['#3B82F6', '#EF4444', '#10B981', '#F59E0B', '#8B5CF6', '#EC4899', '#06B6D4', '#6366F1', '#14B8A6', '#F97316'];
@@ -81,10 +82,6 @@ export default function Dashboard({ onImport, importing, darkMode, setDarkMode, 
       stats[p.family_lib].products += 1;
     });
     return Object.values(stats).sort((a, b) => b.ca - a.ca);
-  }, [products]);
-
-  const topProducts = useMemo(() => {
-    return [...products].sort((a, b) => (b.ca || 0) - (a.ca || 0)).slice(0, 10);
   }, [products]);
 
   useEffect(() => {
@@ -362,48 +359,9 @@ export default function Dashboard({ onImport, importing, darkMode, setDarkMode, 
         )}
 
         {view === 'analytics' && (
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-            <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6">
-              <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-4">🏆 Top 10 Produits</h3>
-              <div className="space-y-3">
-                {topProducts.map((product, idx) => (
-                  <div key={idx} className="flex items-center gap-4">
-                    <div className="text-2xl font-bold text-gray-400 dark:text-gray-500 w-8">{idx + 1}</div>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium text-gray-900 dark:text-white truncate">{product.prod_lib}</p>
-                      <p className="text-xs text-gray-500 dark:text-gray-400">{product.family_lib}</p>
-                    </div>
-                    <div className="text-right">
-                      <p className="font-bold text-blue-600 dark:text-blue-400">{(product.ca / 1000).toFixed(0)}K€</p>
-                      <p className="text-xs text-gray-500 dark:text-gray-400">{((product.ca / stats.totalCA) * 100).toFixed(1)}%</p>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6">
-              <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-4">📈 Insights</h3>
-              <div className="space-y-4">
-                <div className="p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg border-l-4 border-blue-500">
-                  <p className="text-sm font-medium text-gray-900 dark:text-white">Famille la plus importante</p>
-                  <p className="text-lg font-bold text-blue-600 dark:text-blue-400 mt-1">{familyStats[0]?.name}</p>
-                  <p className="text-xs text-gray-600 dark:text-gray-400 mt-1">{((familyStats[0]?.ca / stats.totalCA) * 100).toFixed(1)}% du CA total</p>
-                </div>
-                <div className="p-4 bg-green-50 dark:bg-green-900/20 rounded-lg border-l-4 border-green-500">
-                  <p className="text-sm font-medium text-gray-900 dark:text-white">Nombre de familles</p>
-                  <p className="text-lg font-bold text-green-600 dark:text-green-400 mt-1">{familyStats.length} familles</p>
-                  <p className="text-xs text-gray-600 dark:text-gray-400 mt-1">{products.length} produits au total</p>
-                </div>
-                <div className="p-4 bg-orange-50 dark:bg-orange-900/20 rounded-lg border-l-4 border-orange-500">
-                  <p className="text-sm font-medium text-gray-900 dark:text-white">Volume moyen par produit</p>
-                  <p className="text-lg font-bold text-orange-600 dark:text-orange-400 mt-1">
-                    {(stats.totalQuantity / stats.productCount).toLocaleString('fr-FR', { maximumFractionDigits: 0 })} u.
-                  </p>
-                </div>
-              </div>
-            </div>
-          </div>
+          <>
+            <BudgetChart products={products} darkMode={darkMode} />
+          </>
         )}
       </main>
     </div>
