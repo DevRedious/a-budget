@@ -1,14 +1,13 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { Search, ChevronLeft, ChevronRight, TrendingUp, DollarSign, Package, BarChart3, Moon, Sun, LogOut, Download } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
-import { collection, getDocs } from 'firebase/firestore';
-import { db } from './firebase';
 import BudgetChart from './BudgetChart';
 import BudgetComparison from './BudgetComparison';
 import AlertsDashboard from './AlertsDashboard';
 import DebugInfo from './DebugInfo';
 import FirestoreTest from './FirestoreTest';
 import { importBudgetDataToFirestore } from './importBudgetData';
+import { getAllBudgetProducts } from './firebaseHelpers';
 
 const ITEMS_PER_PAGE = 50;
 const COLORS = ['#3B82F6', '#EF4444', '#10B981', '#F59E0B', '#8B5CF6', '#EC4899', '#06B6D4', '#6366F1', '#14B8A6', '#F97316'];
@@ -28,11 +27,8 @@ export default function Dashboard({ onImport, importing, darkMode, setDarkMode, 
     const fetchProducts = async () => {
       try {
         setLoading(true);
-        const querySnapshot = await getDocs(collection(db, 'produits'));
-        const data = [];
-        querySnapshot.forEach((doc) => {
-          data.push({ id: doc.id, ...doc.data() });
-        });
+        const data = await getAllBudgetProducts();
+        console.log('Dashboard: Chargé', data.length, 'produits du budget');
         setProducts(data);
       } catch (err) {
         console.error('Erreur:', err);
@@ -47,8 +43,9 @@ export default function Dashboard({ onImport, importing, darkMode, setDarkMode, 
   const families = useMemo(() => {
     const unique = {};
     products.forEach(p => {
-      if (!unique[p.family_code]) {
-        unique[p.family_code] = p.family_lib;
+      const familyKey = p.famille_appro_lib || p.family_code;
+      if (!unique[familyKey]) {
+        unique[familyKey] = p.famille_appro_lib || p.family_lib;
       }
     });
     return unique;
@@ -58,7 +55,8 @@ export default function Dashboard({ onImport, importing, darkMode, setDarkMode, 
     return products.filter(product => {
       const matchSearch = product.prod_lib?.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          product.prod_code?.toString().includes(searchTerm);
-      const matchFamily = !selectedFamily || product.family_code === selectedFamily;
+      const familyKey = product.famille_appro_lib || product.family_code;
+      const matchFamily = !selectedFamily || familyKey === selectedFamily;
       return matchSearch && matchFamily;
     });
   }, [searchTerm, selectedFamily, products]);
@@ -71,22 +69,23 @@ export default function Dashboard({ onImport, importing, darkMode, setDarkMode, 
   const totalPages = Math.ceil(filteredData.length / ITEMS_PER_PAGE);
 
   const stats = useMemo(() => {
-    const totalCA = filteredData.reduce((sum, p) => sum + (p.ca || 0), 0);
-    const totalQuantity = filteredData.reduce((sum, p) => sum + (p.quantity || 0), 0);
-    const avgPrice = filteredData.length > 0 ? 
-      filteredData.reduce((sum, p) => sum + (p.unit_price || 0), 0) / filteredData.length : 0;
+    const totalCA = filteredData.reduce((sum, p) => sum + (p.ca_n1_budget || p.ca || 0), 0);
+    const totalQuantity = filteredData.reduce((sum, p) => sum + (p.qte_n1_budget || p.quantity || 0), 0);
+    const avgPrice = filteredData.length > 0 ? totalCA / filteredData.length : 0;
     return { totalCA, totalQuantity, avgPrice, productCount: filteredData.length };
   }, [filteredData]);
 
   const familyStats = useMemo(() => {
     const stats = {};
     products.forEach(p => {
-      if (!stats[p.family_lib]) {
-        stats[p.family_lib] = { name: p.family_lib, ca: 0, quantity: 0, products: 0 };
+      const familyKey = p.famille_appro_lib || p.family_lib;
+      const familyName = p.famille_appro_lib || p.family_lib;
+      if (!stats[familyKey]) {
+        stats[familyKey] = { name: familyName, ca: 0, quantity: 0, products: 0 };
       }
-      stats[p.family_lib].ca += p.ca || 0;
-      stats[p.family_lib].quantity += p.quantity || 0;
-      stats[p.family_lib].products += 1;
+      stats[familyKey].ca += p.ca_n1_budget || p.ca || 0;
+      stats[familyKey].quantity += p.qte_n1_budget || p.quantity || 0;
+      stats[familyKey].products += 1;
     });
     return Object.values(stats).sort((a, b) => b.ca - a.ca);
   }, [products]);
@@ -98,6 +97,7 @@ export default function Dashboard({ onImport, importing, darkMode, setDarkMode, 
   if (loading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center">
+        <FirestoreTest />
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
           <p className="text-gray-700 font-medium">Chargement des données Firebase...</p>
