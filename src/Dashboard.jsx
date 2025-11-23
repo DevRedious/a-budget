@@ -1,18 +1,17 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { Search, ChevronLeft, ChevronRight, TrendingUp, DollarSign, Package, BarChart3, Moon, Sun, LogOut, Download } from 'lucide-react';
+import { Search, ChevronLeft, ChevronRight, TrendingUp, DollarSign, Package, BarChart3, Moon, Sun, LogOut } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
 import BudgetChart from './BudgetChart';
 import BudgetComparison from './BudgetComparison';
 import AlertsDashboard from './AlertsDashboard';
 import DebugInfo from './DebugInfo';
 import FirestoreTest from './FirestoreTest';
-import { importBudgetDataToFirestore } from './importBudgetData';
 import { getAllBudgetProducts } from './firebaseHelpers';
 
 const ITEMS_PER_PAGE = 50;
 const COLORS = ['#3B82F6', '#EF4444', '#10B981', '#F59E0B', '#8B5CF6', '#EC4899', '#06B6D4', '#6366F1', '#14B8A6', '#F97316'];
 
-export default function Dashboard({ onImport, importing, darkMode, setDarkMode, user, onLogout }) {
+export default function Dashboard({ darkMode, setDarkMode, user, onLogout }) {
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -20,9 +19,6 @@ export default function Dashboard({ onImport, importing, darkMode, setDarkMode, 
   const [selectedFamily, setSelectedFamily] = useState(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [view, setView] = useState('overview');
-  const [importingBudget, setImportingBudget] = useState(false);
-  const [budgetImported, setBudgetImported] = useState(false);
-  const [statusMessage, setStatusMessage] = useState(null);
 
   useEffect(() => {
     const fetchProducts = async () => {
@@ -123,11 +119,6 @@ export default function Dashboard({ onImport, importing, darkMode, setDarkMode, 
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-gray-900 dark:to-gray-800">
       <DebugInfo />
       <FirestoreTest />
-      {statusMessage && (
-        <div className="bg-yellow-300 text-black p-4 text-center font-bold text-xl border-b-4 border-yellow-600">
-          {statusMessage}
-        </div>
-      )}
       <header className="bg-white dark:bg-gray-800 shadow-lg sticky top-0 z-50">
         <div className="max-w-7xl mx-auto px-6 py-6">
           <div className="flex items-center justify-between mb-6">
@@ -143,38 +134,6 @@ export default function Dashboard({ onImport, importing, darkMode, setDarkMode, 
               </div>
             </div>
             <div className="flex gap-2 items-center">
-              {!budgetImported && (
-                <button
-                  onClick={async () => {
-                    setImportingBudget(true);
-                    setStatusMessage("Import en cours...");
-                    try {
-                      console.log('🚀 Début import...');
-                      await importBudgetDataToFirestore();
-                      console.log('✅ Import réussi!');
-                      setStatusMessage("✅ SUCCÈS: Import réussi ! Reloading...");
-                      setBudgetImported(true);
-                      // Refresh après 2 secondes
-                      setTimeout(() => window.location.reload(), 2000);
-                    } catch (err) {
-                      console.error('❌ Erreur import:', err);
-                      setStatusMessage(`❌ ERREUR: ${err.message}`);
-                    } finally {
-                      setImportingBudget(false);
-                    }
-                  }}
-                  disabled={importingBudget}
-                  className="px-4 py-2 rounded-lg font-medium bg-purple-600 text-white hover:bg-purple-700 disabled:opacity-50 flex items-center gap-2"
-                >
-                  <Download className="w-4 h-4" />
-                  {importingBudget ? '⏳ Import budget...' : '📊 Import 330 produits'}
-                </button>
-              )}
-              {budgetImported && (
-                <div className="px-4 py-2 rounded-lg font-medium bg-green-600 text-white flex items-center gap-2">
-                  ✅ Budget importé
-                </div>
-              )}
               <button
                 onClick={() => setDarkMode(!darkMode)}
                 className="px-4 py-2 rounded-lg font-medium bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-200 hover:bg-gray-300 dark:hover:bg-gray-600 transition"
