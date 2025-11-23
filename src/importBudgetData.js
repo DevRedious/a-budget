@@ -22,13 +22,22 @@ export async function importBudgetDataToFirestore() {
     console.log(`📦 ${Object.keys(byFamily).length} familles identifiées:`, Object.keys(byFamily));
 
     // Import par famille - créer la collection /familles d'abord
-    const famillesRef = doc(db, 'familles', '__metadata__');
+    const famillesRef = doc(db, 'familles', '_metadata');
     batch.set(famillesRef, { created: new Date() }, { merge: true });
 
     Object.entries(byFamily).forEach(([familyName, products]) => {
       const familyId = familyName.toLowerCase().replace(/[- ]/g, '_');
       familyNames.push(familyId);
       console.log(`📂 Ajout famille: ${familyId} (${products.length} produits)`);
+
+      // CRUCIAL: Créer le document parent de la famille pour qu'il soit listable
+      const familyRef = doc(db, 'familles', familyId);
+      batch.set(familyRef, {
+        name: familyName,
+        id: familyId,
+        productCount: products.length,
+        updatedAt: new Date()
+      }, { merge: true });
 
       products.forEach(product => {
         const prodId = `prod_${product.prodCode}`;

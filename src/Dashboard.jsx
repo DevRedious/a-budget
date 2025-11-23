@@ -22,6 +22,7 @@ export default function Dashboard({ onImport, importing, darkMode, setDarkMode, 
   const [view, setView] = useState('overview');
   const [importingBudget, setImportingBudget] = useState(false);
   const [budgetImported, setBudgetImported] = useState(false);
+  const [statusMessage, setStatusMessage] = useState(null);
 
   useEffect(() => {
     const fetchProducts = async () => {
@@ -54,7 +55,7 @@ export default function Dashboard({ onImport, importing, darkMode, setDarkMode, 
   const filteredData = useMemo(() => {
     return products.filter(product => {
       const matchSearch = product.prod_lib?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         product.prod_code?.toString().includes(searchTerm);
+        product.prod_code?.toString().includes(searchTerm);
       const familyKey = product.famille_appro_lib || product.family_code;
       const matchFamily = !selectedFamily || familyKey === selectedFamily;
       return matchSearch && matchFamily;
@@ -122,6 +123,11 @@ export default function Dashboard({ onImport, importing, darkMode, setDarkMode, 
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-gray-900 dark:to-gray-800">
       <DebugInfo />
       <FirestoreTest />
+      {statusMessage && (
+        <div className="bg-yellow-300 text-black p-4 text-center font-bold text-xl border-b-4 border-yellow-600">
+          {statusMessage}
+        </div>
+      )}
       <header className="bg-white dark:bg-gray-800 shadow-lg sticky top-0 z-50">
         <div className="max-w-7xl mx-auto px-6 py-6">
           <div className="flex items-center justify-between mb-6">
@@ -141,16 +147,18 @@ export default function Dashboard({ onImport, importing, darkMode, setDarkMode, 
                 <button
                   onClick={async () => {
                     setImportingBudget(true);
+                    setStatusMessage("Import en cours...");
                     try {
                       console.log('🚀 Début import...');
                       await importBudgetDataToFirestore();
                       console.log('✅ Import réussi!');
+                      setStatusMessage("✅ SUCCÈS: Import réussi ! Reloading...");
                       setBudgetImported(true);
                       // Refresh après 2 secondes
                       setTimeout(() => window.location.reload(), 2000);
                     } catch (err) {
                       console.error('❌ Erreur import:', err);
-                      alert('Erreur: ' + err.message);
+                      setStatusMessage(`❌ ERREUR: ${err.message}`);
                     } finally {
                       setImportingBudget(false);
                     }
@@ -178,9 +186,8 @@ export default function Dashboard({ onImport, importing, darkMode, setDarkMode, 
                 <button
                   key={v}
                   onClick={() => setView(v)}
-                  className={`px-4 py-2 rounded-lg font-medium transition ${
-                    view === v ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-700 hover:bg-gray-300 dark:bg-gray-700 dark:text-gray-200 dark:hover:bg-gray-600'
-                  }`}
+                  className={`px-4 py-2 rounded-lg font-medium transition ${view === v ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-700 hover:bg-gray-300 dark:bg-gray-700 dark:text-gray-200 dark:hover:bg-gray-600'
+                    }`}
                 >
                   {v === 'overview' ? '📊 Vue' : v === 'products' ? '📦 Produits' : v === 'budget' ? '💰 Budget' : v === 'alerts' ? '⚠️ Alertes' : '📈 Analyses'}
                 </button>
@@ -364,11 +371,10 @@ export default function Dashboard({ onImport, importing, darkMode, setDarkMode, 
                       <button
                         key={page}
                         onClick={() => setCurrentPage(page)}
-                        className={`px-3 py-1 rounded-lg ${
-                          currentPage === page
-                            ? 'bg-blue-600 text-white'
-                            : 'bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-600'
-                        }`}
+                        className={`px-3 py-1 rounded-lg ${currentPage === page
+                          ? 'bg-blue-600 text-white'
+                          : 'bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-600'
+                          }`}
                       >
                         {page}
                       </button>

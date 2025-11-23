@@ -9,6 +9,7 @@ function App() {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
   const [importing, setImporting] = useState(false);
+  const [statusMessage, setStatusMessage] = useState(null);
   const [darkMode, setDarkMode] = useState(() => {
     const saved = localStorage.getItem('darkMode');
     return saved ? JSON.parse(saved) : false;
@@ -42,16 +43,20 @@ function App() {
 
   const handleImport = async () => {
     setImporting(true);
+    setStatusMessage("Import en cours...");
     try {
       const result = await importProducts();
       if (result.success) {
-        alert(`✅ ${result.count} produits importés avec succès !`);
-        window.location.reload();
+        setStatusMessage(`✅ SUCCÈS: ${result.count} produits importés ! Reloading...`);
+        console.log(`✅ ${result.count} produits importés avec succès !`);
+        setTimeout(() => window.location.reload(), 2000);
       } else {
-        alert(`❌ Erreur : ${result.error}`);
+        setStatusMessage(`❌ ERREUR: ${result.error}`);
+        console.error(`❌ Erreur : ${result.error}`);
       }
     } catch (error) {
-      alert(`❌ Erreur : ${error.message}`);
+      setStatusMessage(`❌ EXCEPTION: ${error.message}`);
+      console.error(`❌ Erreur : ${error.message}`);
     } finally {
       setImporting(false);
     }
@@ -71,13 +76,18 @@ function App() {
   if (!user) {
     return (
       <div className={darkMode ? 'dark' : ''}>
-        <Login onLoginSuccess={() => {}} />
+        <Login onLoginSuccess={() => { }} />
       </div>
     );
   }
 
   return (
     <div className={darkMode ? 'dark' : ''}>
+      {statusMessage && (
+        <div className="fixed top-0 left-0 right-0 z-[100] bg-yellow-300 text-black p-4 text-center font-bold text-xl border-b-4 border-yellow-600">
+          {statusMessage}
+        </div>
+      )}
       <Dashboard
         onImport={handleImport}
         importing={importing}

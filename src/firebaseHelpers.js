@@ -14,7 +14,7 @@ export async function getAllBudgetProducts() {
     // Si /familles existe et a des docs (pas juste le __metadata__)
     if (familles.size > 0) {
       for (const familleDoc of familles.docs) {
-        if (familleDoc.id === '__metadata__') continue;
+        if (familleDoc.id === '_metadata') continue;
         console.log(`🔍 Fetch produits pour famille: ${familleDoc.id}`);
         const produitsRef = collection(db, 'familles', familleDoc.id, 'produits');
         const produits = await getDocs(produitsRef);
@@ -28,16 +28,18 @@ export async function getAllBudgetProducts() {
           });
         });
       }
-    } else {
-      // Sinon chercher les familles à la racine (anciennes données)
-      console.log('⚠️ /familles vide, cherchant les familles à la racine...');
-      const collectionsSnap = await getDocs(collection(db, ''));
+    }
+
+    // Si on n'a trouvé aucun produit via la structure /familles (même si la collection existe),
+    // on tente le fallback vers les collections racines
+    if (allProducts.length === 0) {
+      console.log('⚠️ Aucun produit trouvé dans /familles, tentative fallback sur collections racines...');
       // Note: Firestore ne permet pas de lister les collections facilement, donc on cherche les collections connues
       const familyNames = ['champignons', 'epicerie_additif', 'fruits_legumes', 'feculent', 'liquides',
-                           'produits_d_oeuf', 'produits_de_la_mer_coquillage', 'produits_de_la_mer_crustace',
-                           'produits_de_la_mer_cephalopode', 'produits_de_la_mer_poisson', 'produits_laitiers',
-                           'produits_negoce', 'viande_agneau', 'viande_boeuf', 'viande_charcuterie', 'viande_gibier',
-                           'viande_porc', 'viande_volaille'];
+        'produits_d_oeuf', 'produits_de_la_mer_coquillage', 'produits_de_la_mer_crustace',
+        'produits_de_la_mer_cephalopode', 'produits_de_la_mer_poisson', 'produits_laitiers',
+        'produits_negoce', 'viande_agneau', 'viande_boeuf', 'viande_charcuterie', 'viande_gibier',
+        'viande_porc', 'viande_volaille'];
 
       for (const familyId of familyNames) {
         try {
