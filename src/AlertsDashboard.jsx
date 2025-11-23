@@ -1,32 +1,9 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { TrendingDown, TrendingUp, Zap } from 'lucide-react';
-import { getAllBudgetProducts } from './firebaseHelpers';
 
-export default function AlertsDashboard({ darkMode }) {
-  const [products, setProducts] = useState([]);
-  const [loading, setLoading] = useState(true);
+
+export default function AlertsDashboard({ products, darkMode }) {
   const [filterType, setFilterType] = useState('all');
-
-  useEffect(() => {
-    const fetchProducts = async () => {
-      try {
-        setLoading(true);
-        const allProducts = await getAllBudgetProducts();
-        console.log('AlertsDashboard: Chargé', allProducts.length, 'produits');
-        setProducts(allProducts);
-      } catch (err) {
-        console.error('Erreur fetch:', err);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchProducts();
-
-    // Rafraîchir toutes les 3 secondes
-    const interval = setInterval(fetchProducts, 3000);
-    return () => clearInterval(interval);
-  }, []);
 
   // Calculer les alertes
   const alerts = useMemo(() => {
@@ -81,13 +58,7 @@ export default function AlertsDashboard({ darkMode }) {
     return alerts.filter(a => a.type === filterType);
   }, [alerts, filterType]);
 
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center h-96">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
-      </div>
-    );
-  }
+
 
   const alertCounts = {
     all: alerts.length,
@@ -119,11 +90,10 @@ export default function AlertsDashboard({ darkMode }) {
           <button
             key={type}
             onClick={() => setFilterType(type)}
-            className={`px-4 py-2 rounded-lg font-medium transition ${
-              filterType === type
-                ? 'bg-blue-600 text-white'
-                : 'bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-200'
-            }`}
+            className={`px-4 py-2 rounded-lg font-medium transition ${filterType === type
+              ? 'bg-blue-600 text-white'
+              : 'bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-200'
+              }`}
           >
             {type === 'all' ? 'Tous' : type === 'inflation' ? '🔴 Inflation' : type === 'volume' ? '🔴 Volume' : '🟡 Budget'}
           </button>
@@ -140,11 +110,10 @@ export default function AlertsDashboard({ darkMode }) {
           filteredAlerts.map(alert => (
             <div
               key={alert.id}
-              className={`rounded-lg p-4 shadow-lg border-l-4 ${
-                alert.level === 'critical'
-                  ? 'bg-red-50 dark:bg-red-900/20 border-red-500'
-                  : 'bg-yellow-50 dark:bg-yellow-900/20 border-yellow-500'
-              }`}
+              className={`rounded-lg p-4 shadow-lg border-l-4 ${alert.level === 'critical'
+                ? 'bg-red-50 dark:bg-red-900/20 border-red-500'
+                : 'bg-yellow-50 dark:bg-yellow-900/20 border-yellow-500'
+                }`}
             >
               <div className="flex items-start gap-4">
                 <div className="text-2xl">{alert.icon}</div>

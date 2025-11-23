@@ -352,19 +352,16 @@ export default function Dashboard({ darkMode, setDarkMode, user, onLogout }) {
             )}
           </div>
         )}
-
         {view === 'budget' && (
           <BudgetComparison products={products} darkMode={darkMode} />
         )}
 
         {view === 'alerts' && (
-          <AlertsDashboard darkMode={darkMode} />
+          <AlertsDashboard products={products} darkMode={darkMode} />
         )}
 
         {view === 'analytics' && (
-          <>
-            <BudgetChart products={products} darkMode={darkMode} />
-          </>
+          <BudgetChart products={products} darkMode={darkMode} />
         )}
       </main>
     </div>

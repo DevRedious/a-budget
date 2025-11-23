@@ -20,12 +20,13 @@ export default function BudgetChart({ products, darkMode }) {
   const familyData = useMemo(() => {
     const stats = {};
     products.forEach(p => {
-      if (!stats[p.family_lib]) {
-        stats[p.family_lib] = { name: p.family_lib, ca: 0, quantity: 0, products: 0 };
+      const familyName = p.famille_appro_lib || p.family_lib || 'Inconnu';
+      if (!stats[familyName]) {
+        stats[familyName] = { name: familyName, ca: 0, quantity: 0, products: 0 };
       }
-      stats[p.family_lib].ca += p.ca || 0;
-      stats[p.family_lib].quantity += p.quantity || 0;
-      stats[p.family_lib].products += 1;
+      stats[familyName].ca += p.ca_n1_budget || p.ca || 0;
+      stats[familyName].quantity += p.qte_n1_budget || p.quantity || 0;
+      stats[familyName].products += 1;
     });
     return Object.values(stats).sort((a, b) => b.ca - a.ca);
   }, [products]);
@@ -33,13 +34,13 @@ export default function BudgetChart({ products, darkMode }) {
   // Top 10 produits
   const topProductsData = useMemo(() => {
     return [...products]
-      .sort((a, b) => (b.ca || 0) - (a.ca || 0))
+      .sort((a, b) => (b.ca_n1_budget || b.ca || 0) - (a.ca_n1_budget || a.ca || 0))
       .slice(0, 10)
       .map((p) => ({
-        name: p.prod_lib.substring(0, 25),
-        ca: p.ca,
-        quantity: p.quantity,
-        family: p.family_lib,
+        name: (p.prod_lib || p.libelle || 'Inconnu').substring(0, 25),
+        ca: p.ca_n1_budget || p.ca || 0,
+        quantity: p.qte_n1_budget || p.quantity || 0,
+        family: p.famille_appro_lib || p.family_lib || 'Inconnu',
       }));
   }, [products]);
 
@@ -157,7 +158,7 @@ export default function BudgetChart({ products, darkMode }) {
                       {(product.ca / 1000000).toFixed(2)}M€
                     </p>
                     <p className="text-xs text-gray-500 dark:text-gray-400">
-                      {product.quantity.toLocaleString('fr-FR')} u.
+                      {(product.quantity || 0).toLocaleString('fr-FR')} u.
                     </p>
                   </div>
                   <div
