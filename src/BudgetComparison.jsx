@@ -1,36 +1,13 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { ChevronLeft, ChevronRight, TrendingUp, TrendingDown, AlertCircle } from 'lucide-react';
-import { getAllBudgetProducts } from './firebaseHelpers';
+
 
 const ITEMS_PER_PAGE = 30;
 
-export default function BudgetComparison({ darkMode }) {
-  const [products, setProducts] = useState([]);
-  const [loading, setLoading] = useState(true);
+export default function BudgetComparison({ products, darkMode }) {
   const [currentPage, setCurrentPage] = useState(1);
   const [sortBy, setSortBy] = useState('ecart_ca_pct'); // tri par écart CA
   const [selectedFamily, setSelectedFamily] = useState(null);
-
-  useEffect(() => {
-    const fetchProducts = async () => {
-      try {
-        setLoading(true);
-        const allProducts = await getAllBudgetProducts();
-        console.log('BudgetComparison: Chargé', allProducts.length, 'produits');
-        setProducts(allProducts);
-      } catch (err) {
-        console.error('Erreur fetch:', err);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchProducts();
-
-    // Rafraîchir toutes les 3 secondes
-    const interval = setInterval(fetchProducts, 3000);
-    return () => clearInterval(interval);
-  }, []);
 
   const families = useMemo(() => {
     const unique = new Set();
@@ -69,13 +46,7 @@ export default function BudgetComparison({ darkMode }) {
     return 'bg-green-50 dark:bg-green-900/20';
   };
 
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center h-96">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
-      </div>
-    );
-  }
+
 
   return (
     <div className="space-y-6">
@@ -85,11 +56,10 @@ export default function BudgetComparison({ darkMode }) {
         <div className="flex gap-4 flex-wrap">
           <button
             onClick={() => setSelectedFamily(null)}
-            className={`px-4 py-2 rounded-lg font-medium transition ${
-              !selectedFamily
-                ? 'bg-blue-600 text-white'
-                : 'bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-200'
-            }`}
+            className={`px-4 py-2 rounded-lg font-medium transition ${!selectedFamily
+              ? 'bg-blue-600 text-white'
+              : 'bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-200'
+              }`}
           >
             Tous ({filteredData.length})
           </button>
@@ -97,11 +67,10 @@ export default function BudgetComparison({ darkMode }) {
             <button
               key={family}
               onClick={() => setSelectedFamily(family)}
-              className={`px-4 py-2 rounded-lg font-medium transition ${
-                selectedFamily === family
-                  ? 'bg-blue-600 text-white'
-                  : 'bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-200'
-              }`}
+              className={`px-4 py-2 rounded-lg font-medium transition ${selectedFamily === family
+                ? 'bg-blue-600 text-white'
+                : 'bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-200'
+                }`}
             >
               {family} ({products.filter(p => p.famille_appro_lib === family).length})
             </button>
