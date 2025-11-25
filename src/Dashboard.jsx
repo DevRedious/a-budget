@@ -3,6 +3,7 @@ import { Search, ChevronLeft, ChevronRight, TrendingUp, DollarSign, Package, Bar
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
 import BudgetChart from './BudgetChart';
 import BudgetComparison from './BudgetComparison';
+import StorageMap from './StorageMap';
 import AlertsDashboard from './AlertsDashboard';
 import DebugInfo from './DebugInfo';
 import FirestoreTest from './FirestoreTest';
@@ -141,14 +142,14 @@ export default function Dashboard({ darkMode, setDarkMode, user, onLogout }) {
               >
                 {darkMode ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
               </button>
-              {['overview', 'products', 'budget', 'alerts', 'analytics'].map(v => (
+              {['overview', 'products', 'budget', 'alerts', 'analytics', 'storage'].map(v => (
                 <button
                   key={v}
                   onClick={() => setView(v)}
                   className={`px-4 py-2 rounded-lg font-medium transition ${view === v ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-700 hover:bg-gray-300 dark:bg-gray-700 dark:text-gray-200 dark:hover:bg-gray-600'
                     }`}
                 >
-                  {v === 'overview' ? '📊 Vue' : v === 'products' ? '📦 Produits' : v === 'budget' ? '💰 Budget' : v === 'alerts' ? '⚠️ Alertes' : '📈 Analyses'}
+                  {v === 'overview' ? '📊 Vue' : v === 'products' ? '📦 Produits' : v === 'budget' ? '💰 Budget' : v === 'alerts' ? '⚠️ Alertes' : v === 'analytics' ? '📈 Analyses' : '🗺️ Plan Stockage'}
                 </button>
               ))}
               {user && onLogout && (
@@ -362,6 +363,10 @@ export default function Dashboard({ darkMode, setDarkMode, user, onLogout }) {
 
         {view === 'analytics' && (
           <BudgetChart products={products} darkMode={darkMode} />
+        )}
+
+        {view === 'storage' && (
+          <StorageMap products={products} darkMode={darkMode} />
         )}
       </main>
     </div>
