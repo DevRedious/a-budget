@@ -99,3 +99,23 @@ export async function getAlertCounts() {
     budget,
   };
 }
+
+// Récupérer les produits pour le plan de stockage
+export async function getAllStorageProducts() {
+  try {
+    console.log('🔍 Début fetch produits stockage...');
+    const produitsRef = collection(db, 'stockage_produits');
+    const produits = await getDocs(produitsRef);
+    console.log(`✓ Stockage: ${produits.size} produits trouvés`);
+
+    const storageProducts = produits.docs.map(doc => ({
+      id: doc.id,
+      ...doc.data(),
+    }));
+
+    return storageProducts;
+  } catch (error) {
+    console.error('❌ Erreur récupération produits stockage:', error);
+    return [];
+  }
+}

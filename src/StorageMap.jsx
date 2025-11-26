@@ -1,10 +1,28 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { Printer, Save, X, Search } from 'lucide-react';
+import { getAllStorageProducts } from './firebaseHelpers';
 
-const StorageMap = ({ products, darkMode }) => {
+const StorageMap = ({ darkMode }) => {
+    const [products, setProducts] = useState([]);
+    const [loading, setLoading] = useState(true);
     const [selectedLocation, setSelectedLocation] = useState(null);
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [searchTerm, setSearchTerm] = useState('');
+
+    useEffect(() => {
+        const fetchStorageProducts = async () => {
+            try {
+                setLoading(true);
+                const data = await getAllStorageProducts();
+                setProducts(data);
+            } catch (error) {
+                console.error("Failed to fetch storage products", error);
+            } finally {
+                setLoading(false);
+            }
+        };
+        fetchStorageProducts();
+    }, []);
 
     // Configuration based on the specific layout image
     // A, B, C: Top aligned (Physical rows 17-24), Labels 5-12 (Inverted: 5 at top)
@@ -174,7 +192,10 @@ const StorageMap = ({ products, darkMode }) => {
     return (
         <div className="h-full flex flex-col bg-white dark:bg-gray-900">
             <div className="flex justify-between items-center px-6 py-4 print:hidden bg-white dark:bg-gray-800 border-b dark:border-gray-700">
-                <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Plan de Stockage Interactif</h2>
+                <div className="flex items-center gap-4">
+                    <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Plan de Stockage Interactif</h2>
+                    {loading && <span className="text-sm text-gray-500 animate-pulse">Chargement...</span>}
+                </div>
                 <button
                     onClick={handlePrint}
                     className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition"
@@ -218,6 +239,7 @@ const StorageMap = ({ products, darkMode }) => {
             }
           `}
                 </style>
+
                 <div className="w-full h-full flex flex-col print-container print:min-w-0 relative p-2">
                     {/* Header for Aisles */}
                     <div className="flex mb-2 text-center font-bold text-gray-500 dark:text-gray-400 print:text-black text-sm print:text-sm gap-4 print:gap-2">

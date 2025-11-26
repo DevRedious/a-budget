@@ -188,7 +188,7 @@ export default function Dashboard({ darkMode, setDarkMode, user, onLogout }) {
             </select>
           </div>
         </div>
-      </header>
+      </header >
 
       <main className="max-w-7xl mx-auto px-6 py-8">
         {view === 'overview' && (
@@ -366,9 +366,9 @@ export default function Dashboard({ darkMode, setDarkMode, user, onLogout }) {
         )}
 
         {view === 'storage' && (
-          <StorageMap products={products} darkMode={darkMode} />
+          <StorageMap darkMode={darkMode} />
         )}
       </main>
-    </div>
+    </div >
   );
 }
