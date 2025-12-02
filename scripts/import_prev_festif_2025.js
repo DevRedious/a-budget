@@ -3,6 +3,9 @@ const path = require('path');
 const { initializeApp } = require('firebase/app');
 const { getFirestore, collection, writeBatch, doc } = require('firebase/firestore');
 
+// NOTE: Script de secours pour reimport exceptionnel uniquement.
+// Les donnees festif 2025 sont deja en base; ne pas l'executer par erreur.
+
 // Import de la config Firebase depuis le projet
 const firebaseConfig = {
   apiKey: "AIzaSyB0JrvOLh1JwV6RLjfXqLUaozxYzPUqFes",
