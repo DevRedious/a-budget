@@ -21,3 +21,6 @@
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
+
+# scripts et données locales sensibles (non nécessaires en prod)
+/scripts
