@@ -1,4 +1,4 @@
-import { collection, getDocs } from 'firebase/firestore';
+import { collection, getDocs, writeBatch, doc, deleteDoc, query } from 'firebase/firestore';
 import { db } from './firebase';
 
 // Récupérer tous les produits du budget depuis Firestore
@@ -116,6 +116,113 @@ export async function getAllStorageProducts() {
     return storageProducts;
   } catch (error) {
     console.error('❌ Erreur récupération produits stockage:', error);
+    return [];
+  }
+}
+
+// Récupérer tous les produits de picking depuis Firestore
+export async function getAllPickingProducts() {
+  try {
+    console.log('🔍 Début fetch produits picking...');
+    const produitsRef = collection(db, 'pickingProducts');
+    const produits = await getDocs(produitsRef);
+    console.log(`✓ Picking: ${produits.size} produits trouvés`);
+    return produits.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+  } catch (error) {
+    console.error('❌ Erreur récupération produits picking:', error);
+    return [];
+  }
+}
+
+// Récupérer les prévisions festif 2025 depuis Firestore
+export async function getPrevisionsFestif2025() {
+  try {
+    console.log('🔍 Début fetch prévisions festif 2025...');
+    const previsionsRef = collection(db, 'previsions_festif_2025');
+    const previsions = await getDocs(previsionsRef);
+    console.log(`✓ Prévisions festif 2025: ${previsions.size} produits trouvés`);
+    return previsions.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+  } catch (error) {
+    console.error('❌ Erreur récupération prévisions festif 2025:', error);
+    return [];
+  }
+}
+
+// Sauvegarder un plan de stockage nommé dans Firestore
+export async function saveStorageMap(planName, locations) {
+  try {
+    console.log(`💾 Début sauvegarde plan de stockage: ${planName}...`);
+    const storageMapRef = collection(db, 'storage_maps');
+
+    // Filtrer uniquement les emplacements assignés
+    const assignedLocations = locations.filter(loc => loc.assignedProductId);
+
+    // Créer ou mettre à jour le plan
+    const planDocRef = doc(storageMapRef, planName);
+    const batch = writeBatch(db);
+    batch.set(planDocRef, {
+      name: planName,
+      locations: assignedLocations.map(loc => ({
+        aisle: loc.aisle,
+        row: loc.row,
+        code: loc.code,
+        assignedProductId: loc.assignedProductId
+      })),
+      saved_at: new Date().toISOString(),
+      location_count: assignedLocations.length
+    });
+    await batch.commit();
+
+    console.log(`✅ Plan "${planName}" sauvegardé: ${assignedLocations.length} emplacements`);
+    return { success: true, count: assignedLocations.length };
+  } catch (error) {
+    console.error('❌ Erreur sauvegarde plan de stockage:', error);
+    throw error;
+  }
+}
+
+// Charger un plan de stockage spécifique depuis Firestore
+export async function loadStorageMap(planName) {
+  try {
+    console.log(`🔍 Début chargement plan de stockage: ${planName}...`);
+    const storageMapRef = collection(db, 'storage_maps');
+    const planDocRef = doc(storageMapRef, planName);
+
+    const snapshot = await getDocs(storageMapRef);
+    const plan = snapshot.docs.find(d => d.id === planName);
+
+    if (plan && plan.exists()) {
+      const data = plan.data();
+      console.log(`✓ Plan "${planName}": ${data.locations?.length || 0} emplacements trouvés`);
+      return data.locations || [];
+    }
+
+    console.log(`⚠️ Plan "${planName}" non trouvé`);
+    return [];
+  } catch (error) {
+    console.error('❌ Erreur chargement plan de stockage:', error);
+    return [];
+  }
+}
+
+// Récupérer la liste de tous les plans de stockage
+export async function getAllStorageMaps() {
+  try {
+    console.log('🔍 Récupération de tous les plans de stockage...');
+    const storageMapRef = collection(db, 'storage_maps');
+    const snapshot = await getDocs(storageMapRef);
+
+    const plans = snapshot.docs.map(doc => ({
+      id: doc.id,
+      name: doc.data().name,
+      saved_at: doc.data().saved_at,
+      location_count: doc.data().location_count
+    }));
+
+    console.log(`✓ ${plans.length} plans trouvés`);
+    return plans;
+  } catch (error) {
+    console.error('❌ Erreur récupération plans:', error);
     return [];
   }
 }

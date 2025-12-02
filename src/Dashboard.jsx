@@ -5,8 +5,7 @@ import BudgetChart from './BudgetChart';
 import BudgetComparison from './BudgetComparison';
 import StorageMap from './StorageMap';
 import AlertsDashboard from './AlertsDashboard';
-import DebugInfo from './DebugInfo';
-import FirestoreTest from './FirestoreTest';
+import ImportPrevFestif2025 from './ImportPrevFestif2025';
 import { getAllBudgetProducts } from './firebaseHelpers';
 
 const ITEMS_PER_PAGE = 50;
@@ -95,7 +94,6 @@ export default function Dashboard({ darkMode, setDarkMode, user, onLogout }) {
   if (loading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center">
-        <FirestoreTest />
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
           <p className="text-gray-700 font-medium">Chargement des données Firebase...</p>
@@ -118,8 +116,6 @@ export default function Dashboard({ darkMode, setDarkMode, user, onLogout }) {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-gray-900 dark:to-gray-800">
-      <DebugInfo />
-      <FirestoreTest />
       <header className="bg-white dark:bg-gray-800 shadow-lg sticky top-0 z-50">
         <div className="max-w-7xl mx-auto px-6 py-6">
           <div className="flex items-center justify-between mb-6">
@@ -142,14 +138,14 @@ export default function Dashboard({ darkMode, setDarkMode, user, onLogout }) {
               >
                 {darkMode ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
               </button>
-              {['overview', 'products', 'budget', 'alerts', 'analytics', 'storage'].map(v => (
+              {['overview', 'products', 'budget', 'alerts', 'analytics', 'storage', 'import'].map(v => (
                 <button
                   key={v}
                   onClick={() => setView(v)}
                   className={`px-4 py-2 rounded-lg font-medium transition ${view === v ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-700 hover:bg-gray-300 dark:bg-gray-700 dark:text-gray-200 dark:hover:bg-gray-600'
                     }`}
                 >
-                  {v === 'overview' ? '📊 Vue' : v === 'products' ? '📦 Produits' : v === 'budget' ? '💰 Budget' : v === 'alerts' ? '⚠️ Alertes' : v === 'analytics' ? '📈 Analyses' : '🗺️ Plan Stockage'}
+                  {v === 'overview' ? '📊 Vue' : v === 'products' ? '📦 Produits' : v === 'budget' ? '💰 Budget' : v === 'alerts' ? '⚠️ Alertes' : v === 'analytics' ? '📈 Analyses' : v === 'storage' ? '🗺️ Plan Stockage' : '⬆️ Import'}
                 </button>
               ))}
               {user && onLogout && (
@@ -367,6 +363,12 @@ export default function Dashboard({ darkMode, setDarkMode, user, onLogout }) {
 
         {view === 'storage' && (
           <StorageMap darkMode={darkMode} />
+        )}
+
+        {view === 'import' && (
+          <div className="flex justify-center items-start pt-8">
+            <ImportPrevFestif2025 />
+          </div>
         )}
       </main>
     </div >
