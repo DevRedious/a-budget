@@ -5,6 +5,8 @@ import BudgetChart from './BudgetChart';
 import BudgetComparison from './BudgetComparison';
 import StorageMap from './StorageMap';
 import AlertsDashboard from './AlertsDashboard';
+import ProductsManager from './ProductsManager';
+import MaintenancePage from './MaintenancePage';
 import { getAllBudgetProducts } from './firebaseHelpers';
 
 const ITEMS_PER_PAGE = 50;
@@ -114,69 +116,85 @@ export default function Dashboard({ darkMode, setDarkMode, user, onLogout }) {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-gray-900 dark:to-gray-800">
-      <header className="bg-white dark:bg-gray-800 shadow-lg sticky top-0 z-50">
-        <div className="max-w-7xl mx-auto px-6 py-6">
-          <div className="flex items-center justify-between mb-6">
-            <div className="flex items-center gap-4">
+    <div className="min-h-screen bg-slate-50 dark:bg-slate-900">
+      <header className="bg-white dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700 sticky top-0 z-50">
+        <div className="max-w-7xl mx-auto px-4 py-3">
+          <div className="flex items-center justify-between mb-3">
+            <div className="flex items-center gap-3">
               <img
                 src="/Logo-LECHEF-Bistronome-1024x711.png"
                 alt="L'echef Bistronome"
-                className="h-16 w-auto object-contain"
+                className="h-12 w-auto object-contain"
               />
               <div>
-                <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Budget Agroalimentaire</h1>
-                <p className="text-gray-600 dark:text-gray-300 mt-1">Firebase Firestore - {products.length} produits</p>
+                <h1 className="text-xl font-mono font-bold text-slate-900 dark:text-slate-100 uppercase tracking-wider">Gestion Agroalimentaire</h1>
               </div>
             </div>
-            <div className="flex gap-2 items-center">
+            <div className="flex gap-1 items-center">
               <button
                 onClick={() => setDarkMode(!darkMode)}
-                className="px-4 py-2 rounded-lg font-medium bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-200 hover:bg-gray-300 dark:hover:bg-gray-600 transition"
+                className="p-1.5 bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-300 dark:border-slate-700 hover:bg-slate-200 dark:hover:bg-slate-700 transition"
                 title={darkMode ? 'Mode clair' : 'Mode sombre'}
               >
-                {darkMode ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
+                {darkMode ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
               </button>
-              {['overview', 'products', 'budget', 'alerts', 'analytics', 'storage'].map(v => (
-                <button
-                  key={v}
-                  onClick={() => setView(v)}
-                  className={`px-4 py-2 rounded-lg font-medium transition ${view === v ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-700 hover:bg-gray-300 dark:bg-gray-700 dark:text-gray-200 dark:hover:bg-gray-600'
+              <div className="h-6 w-px bg-slate-300 dark:bg-slate-700 mx-1"></div>
+              {['overview', 'products', 'budget', 'alerts', 'analytics', 'storage', 'products-manage', 'import-prev'].map(v => {
+                const labels = {
+                  'overview': 'Vue',
+                  'products': 'Produits',
+                  'budget': 'Budget',
+                  'alerts': 'Alertes',
+                  'analytics': 'Analyses',
+                  'storage': 'Plan',
+                  'products-manage': 'Gestion',
+                  'import-prev': 'Import'
+                };
+                return (
+                  <button
+                    key={v}
+                    onClick={() => setView(v)}
+                    className={`px-2 py-1 text-xs font-mono font-medium transition border ${
+                      view === v
+                        ? 'bg-slate-800 dark:bg-slate-700 text-white border-slate-800 dark:border-slate-600'
+                        : 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border-slate-300 dark:border-slate-700 hover:bg-slate-200 dark:hover:bg-slate-700'
                     }`}
-                >
-                  {v === 'overview' ? '📊 Vue' : v === 'products' ? '📦 Produits' : v === 'budget' ? '💰 Budget' : v === 'alerts' ? '⚠️ Alertes' : v === 'analytics' ? '📈 Analyses' : '🗺️ Plan Stockage'}
-                </button>
-              ))}
+                    title={labels[v]}
+                  >
+                    {labels[v].toUpperCase()}
+                  </button>
+                );
+              })}
+              <div className="h-6 w-px bg-slate-300 dark:bg-slate-700 mx-1"></div>
               {user && onLogout && (
                 <button
                   onClick={onLogout}
-                  className="px-4 py-2 rounded-lg font-medium bg-red-600 text-white hover:bg-red-700 transition flex items-center gap-2"
+                  className="p-1.5 bg-red-700 dark:bg-red-800 text-white hover:bg-red-800 dark:hover:bg-red-700 border border-red-700 dark:border-red-800 transition"
                   title="Déconnexion"
                 >
                   <LogOut className="w-4 h-4" />
-                  <span className="hidden sm:inline">Déconnexion</span>
                 </button>
               )}
             </div>
           </div>
 
-          <div className="flex gap-4">
+          <div className="flex gap-2">
             <div className="flex-1 relative">
-              <Search className="absolute left-3 top-3 text-gray-400 dark:text-gray-500 w-5 h-5" />
+              <Search className="absolute left-3 top-2.5 text-slate-400 dark:text-slate-500 w-4 h-4" />
               <input
                 type="text"
                 placeholder="Rechercher un produit..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full pl-10 pr-4 py-2 border-2 border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:border-blue-500 dark:bg-gray-700 dark:text-white dark:placeholder-gray-400"
+                className="w-full pl-9 pr-3 py-2 text-sm border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:ring-1 focus:ring-slate-400 dark:focus:ring-slate-500"
               />
             </div>
             <select
               value={selectedFamily || ''}
               onChange={(e) => setSelectedFamily(e.target.value ? parseInt(e.target.value) : null)}
-              className="px-4 py-2 border-2 border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:border-blue-500 bg-white dark:bg-gray-700 dark:text-white"
+              className="px-3 py-2 text-sm border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-1 focus:ring-slate-400 dark:focus:ring-slate-500 font-mono"
             >
-              <option value="">Toutes ({Object.keys(families).length})</option>
+              <option value="">TOUTES ({Object.keys(families).length})</option>
               {Object.entries(families).map(([code, lib]) => (
                 <option key={code} value={code}>{lib}</option>
               ))}
@@ -362,6 +380,14 @@ export default function Dashboard({ darkMode, setDarkMode, user, onLogout }) {
 
         {view === 'storage' && (
           <StorageMap darkMode={darkMode} />
+        )}
+
+        {view === 'products-manage' && (
+          <ProductsManager darkMode={darkMode} />
+        )}
+
+        {view === 'import-prev' && (
+          <MaintenancePage darkMode={darkMode} />
         )}
       </main>
     </div >

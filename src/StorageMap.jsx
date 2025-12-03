@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo, useEffect, useCallback } from 'react';
 import { Printer, X, Search, Trash2, Save, ChevronDown, Plus } from 'lucide-react';
 import { loadPickingProducts } from './loadPickingProducts';
 import { getPrevisionsFestif2025, saveStorageMap, loadStorageMap, getAllStorageMaps } from './firebaseHelpers';
@@ -273,23 +273,6 @@ const StorageMap = ({ darkMode }) => {
     // Helper to get product details
     const getProduct = (code) => products.find(p => p.prod_code === code);
 
-    // Helper to get product with prevision data
-    const getProductWithPrevision = (code) => {
-        const product = products.find(p => p.prod_code === code);
-        if (!product) return null;
-
-        // Si c'est un produit festif, chercher sa prévision
-        if (product.type === 'festif') {
-            const prodCode = String(product.prod_code).trim();
-            const prevision = previsions.find(prev => String(prev.prod_code).trim() === prodCode);
-            return {
-                ...product,
-                prevision_colis: prevision?.prevision_colis || 0
-            };
-        }
-        return product;
-    };
-
     // Get all assigned product codes
     const assignedProductCodes = useMemo(() => {
         return new Set(locations.filter(loc => loc.assignedProductId).map(loc => loc.assignedProductId));
@@ -331,6 +314,19 @@ const StorageMap = ({ darkMode }) => {
 
         return result.sort((a, b) => b.prevision_colis - a.prevision_colis); // Tri décroissant
     }, [products, previsions]);
+
+    // Helper to get product with prevision data (inclut produits virtuels)
+    const getProductWithPrevision = useCallback((code) => {
+        // D'abord chercher dans festifProductsWithPrevisions (qui contient les virtuels)
+        const festifProduct = festifProductsWithPrevisions.find(p => p.prod_code === code);
+        if (festifProduct) return festifProduct;
+
+        // Sinon chercher dans products normaux
+        const product = products.find(p => p.prod_code === code);
+        if (!product) return null;
+
+        return product;
+    }, [products, festifProductsWithPrevisions]);
 
     // Filter products for modal based on tab and assignments
     const filteredProducts = useMemo(() => {
@@ -379,35 +375,17 @@ const StorageMap = ({ darkMode }) => {
         let borderColor = darkMode ? 'border-slate-700' : 'border-gray-300';
 
         if (product) {
-            // Palette industrielle désaturée pour mode clair/sombre
-            if (product.type === 'festif' && product.prevision_colis > 0) {
-                const qty = product.prevision_colis;
-                if (qty >= 3000) {
-                    // Rouge brique désaturé
-                    bgColor = darkMode ? 'bg-red-950' : 'bg-red-50';
-                    textColor = darkMode ? 'text-red-300' : 'text-red-900';
-                    borderColor = darkMode ? 'border-red-800' : 'border-red-200';
-                } else if (qty >= 1000) {
-                    // Orange industriel mat
-                    bgColor = darkMode ? 'bg-orange-950' : 'bg-orange-50';
-                    textColor = darkMode ? 'text-orange-300' : 'text-orange-900';
-                    borderColor = darkMode ? 'border-orange-800' : 'border-orange-200';
-                } else if (qty >= 300) {
-                    // Jaune olive désaturé
-                    bgColor = darkMode ? 'bg-yellow-950' : 'bg-yellow-50';
-                    textColor = darkMode ? 'text-yellow-300' : 'text-yellow-900';
-                    borderColor = darkMode ? 'border-yellow-800' : 'border-yellow-200';
-                } else {
-                    // Vert olive professionnel
-                    bgColor = darkMode ? 'bg-green-950' : 'bg-green-50';
-                    textColor = darkMode ? 'text-green-300' : 'text-green-900';
-                    borderColor = darkMode ? 'border-green-800' : 'border-green-200';
-                }
+            // Système de couleurs: ROUGE pour festif, VERT pour non-festif (sans nuances)
+            if (product.type === 'festif') {
+                // Produits festifs: ROUGE uni
+                bgColor = darkMode ? 'bg-red-950' : 'bg-red-50';
+                textColor = darkMode ? 'text-red-300' : 'text-red-900';
+                borderColor = darkMode ? 'border-red-800' : 'border-red-200';
             } else {
-                // Produits non-festifs : gris neutre
-                bgColor = darkMode ? 'bg-slate-700' : 'bg-slate-100';
-                textColor = darkMode ? 'text-slate-300' : 'text-slate-700';
-                borderColor = darkMode ? 'border-slate-600' : 'border-slate-300';
+                // Produits non-festifs: VERT uni
+                bgColor = darkMode ? 'bg-green-950' : 'bg-green-50';
+                textColor = darkMode ? 'text-green-300' : 'text-green-900';
+                borderColor = darkMode ? 'border-green-800' : 'border-green-200';
             }
         }
 
@@ -435,32 +413,32 @@ const StorageMap = ({ darkMode }) => {
 
     return (
         <div className="h-full flex flex-col bg-white dark:bg-slate-900">
-            <div className="flex justify-between items-center px-6 py-3 print:hidden bg-white dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700">
-                <div className="flex items-center gap-4">
-                    <h2 className="text-xl font-medium text-slate-900 dark:text-slate-100">Plan de Stockage Interactif</h2>
-                    {loading && <span className="text-sm text-slate-500 dark:text-slate-400 animate-pulse">Chargement...</span>}
+            <div className="flex justify-between items-center px-4 py-2 print:hidden bg-white dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700">
+                <div className="flex items-center gap-3">
+                    <h2 className="text-lg font-medium text-slate-900 dark:text-slate-100">Plan de Stockage Interactif</h2>
+                    {loading && <span className="text-xs text-slate-500 dark:text-slate-400 animate-pulse">Chargement...</span>}
                     {saveStatus && (
-                        <span className="text-sm font-medium text-slate-700 dark:text-slate-300 px-3 py-1.5 bg-slate-50 dark:bg-slate-700 border border-slate-200 dark:border-slate-600">
+                        <span className="text-xs font-medium text-slate-700 dark:text-slate-300 px-2 py-1 bg-slate-50 dark:bg-slate-700 border border-slate-200 dark:border-slate-600">
                             {saveStatus}
                         </span>
                     )}
                 </div>
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-1.5">
                     {/* Menu déroulant pour charger un plan */}
                     <div className="relative flex items-center gap-1">
                         <button
                             onClick={() => setShowPlanDropdown(!showPlanDropdown)}
-                            className="flex items-center gap-2 px-3 py-1.5 bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-300 dark:border-slate-700 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors text-sm"
+                            className="flex items-center gap-1.5 px-2 py-1 bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-300 dark:border-slate-700 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors text-xs"
                         >
                             {selectedPlan ? `${selectedPlan}` : 'Sans plan'}
-                            <ChevronDown className="w-3.5 h-3.5" />
+                            <ChevronDown className="w-3 h-3" />
                         </button>
                         <button
                             onClick={handleNewPlan}
-                            className="p-1.5 bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-300 dark:border-slate-700 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors"
+                            className="p-1 bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-300 dark:border-slate-700 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors"
                             title="Nouveau plan vide"
                         >
-                            <Plus className="w-4 h-4" />
+                            <Plus className="w-3.5 h-3.5" />
                         </button>
                         {showPlanDropdown && (
                             <div className="absolute top-full mt-1 right-0 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 shadow-sm min-w-[250px] max-h-[300px] overflow-y-auto z-50">
@@ -490,30 +468,30 @@ const StorageMap = ({ darkMode }) => {
 
                     <button
                         onClick={() => setIsDeleteModalOpen(true)}
-                        className="p-1.5 bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-300 dark:border-slate-700 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors"
+                        className="p-1 bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-300 dark:border-slate-700 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors"
                         title="Effacer tout"
                     >
-                        <Trash2 className="w-4 h-4" />
+                        <Trash2 className="w-3.5 h-3.5" />
                     </button>
                     <button
                         onClick={handleSaveClick}
-                        className="p-1.5 bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-300 dark:border-slate-700 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors"
+                        className="p-1 bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-300 dark:border-slate-700 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors"
                         title={selectedPlan ? `Sauvegarder "${selectedPlan}"` : "Sauvegarder sous..."}
                     >
-                        <Save className="w-4 h-4" />
+                        <Save className="w-3.5 h-3.5" />
                     </button>
                     <button
                         onClick={handlePrint}
-                        className="p-1.5 bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-300 dark:border-slate-700 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors"
+                        className="p-1 bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-300 dark:border-slate-700 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors"
                         title="Imprimer le plan"
                     >
-                        <Printer className="w-4 h-4" />
+                        <Printer className="w-3.5 h-3.5" />
                     </button>
                 </div>
             </div>
 
             {/* Map Container */}
-            <div className="flex-1 overflow-auto bg-white dark:bg-gray-800 print:p-0 print:shadow-none print:overflow-visible">
+            <div className="flex-1 overflow-auto bg-slate-50 dark:bg-slate-900 print:p-0 print:shadow-none print:overflow-visible">
                 <style type="text/css" media="print">
                     {`
             @page {
@@ -652,12 +630,12 @@ const StorageMap = ({ darkMode }) => {
           `}
                 </style>
 
-                <div className="w-full h-full flex flex-col print-container print:min-w-0 relative p-2">
-                    {/* Header for Aisles */}
-                    <div className="flex mb-2 text-center font-bold text-gray-500 dark:text-gray-400 print:text-black text-sm print:text-sm gap-4 print:gap-2">
+                <div className="w-full h-full flex flex-col print-container print:min-w-0 relative p-4">
+                    {/* Header for Aisles - Style blueprint technique */}
+                    <div className="flex mb-3 text-center font-mono font-bold text-slate-600 dark:text-slate-400 print:text-black text-xs print:text-sm gap-4 print:gap-2 tracking-wider uppercase">
                         {aisleConfig.map(config => (
-                            <div key={config.id} className="flex-1">
-                                {config.label}
+                            <div key={config.id} className="flex-1 px-2 py-1 bg-slate-100 dark:bg-slate-800 border-2 border-slate-300 dark:border-slate-700">
+                                {config.id}
                             </div>
                         ))}
                     </div>
@@ -679,15 +657,15 @@ const StorageMap = ({ darkMode }) => {
                             );
                         })}
 
-                        {/* Local de charge Zone - Positioned over the empty space of A and B/C (Rows 1-12) */}
-                        <div className="absolute bottom-0 left-0 w-[24.5%] h-[42.8%] border-4 border-gray-800 dark:border-gray-400 flex items-center justify-center print:border-black z-10 bg-gray-100/50 dark:bg-gray-800/50 backdrop-blur-sm">
-                            <div className="absolute inset-0 opacity-20"
+                        {/* Local de charge Zone - Style industriel avec hachures */}
+                        <div className="absolute bottom-0 left-0 w-[24.5%] h-[42.8%] border-4 border-slate-700 dark:border-slate-400 flex items-center justify-center print:border-black z-10 bg-slate-200/30 dark:bg-slate-800/30">
+                            <div className="absolute inset-0 opacity-30"
                                 style={{
-                                    backgroundImage: 'repeating-linear-gradient(45deg, #000 0, #000 1px, transparent 0, transparent 10px)'
+                                    backgroundImage: 'repeating-linear-gradient(45deg, #475569 0, #475569 2px, transparent 0, transparent 12px), repeating-linear-gradient(-45deg, #475569 0, #475569 2px, transparent 0, transparent 12px)'
                                 }}
                             ></div>
-                            <div className="relative border-2 border-gray-800 dark:border-gray-400 p-2 bg-white dark:bg-gray-900 print:bg-white print:border-black">
-                                <span className="font-bold text-gray-900 dark:text-gray-100 uppercase tracking-widest text-lg print:text-black">
+                            <div className="relative border-2 border-slate-800 dark:border-slate-300 p-2 bg-slate-800 dark:bg-slate-300 print:bg-white print:border-black">
+                                <span className="font-mono font-bold text-white dark:text-slate-900 uppercase tracking-widest text-sm print:text-black">
                                     Local de charge
                                 </span>
                             </div>
@@ -700,21 +678,21 @@ const StorageMap = ({ darkMode }) => {
             {isModalOpen && (
                 <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 print:hidden">
                     <div className="bg-white dark:bg-slate-800 shadow-sm border border-slate-200 dark:border-slate-700 w-full max-w-4xl flex flex-col max-h-[85vh]">
-                        <div className="px-4 py-3 border-b border-slate-200 dark:border-slate-700 flex justify-between items-center">
-                            <h3 className="text-base font-medium text-slate-900 dark:text-slate-100">
+                        <div className="px-3 py-2 border-b border-slate-200 dark:border-slate-700 flex justify-between items-center">
+                            <h3 className="text-sm font-medium text-slate-900 dark:text-slate-100">
                                 Assigner un produit
-                                <span className="ml-2 text-sm font-normal text-slate-500 dark:text-slate-400">
+                                <span className="ml-2 text-xs font-normal text-slate-500 dark:text-slate-400">
                                     ({selectedLocation?.code})
                                 </span>
                             </h3>
                             <button onClick={() => setIsModalOpen(false)} className="text-slate-400 hover:text-slate-600 dark:text-slate-500 dark:hover:text-slate-300">
-                                <X className="w-5 h-5" />
+                                <X className="w-4 h-4" />
                             </button>
                         </div>
 
                         {/* Onglets festif / non-festif */}
-                        <div className="px-4 pt-4 border-b border-slate-200 dark:border-slate-700">
-                            <div className="flex gap-1 mb-4">
+                        <div className="px-3 pt-3 border-b border-slate-200 dark:border-slate-700">
+                            <div className="flex gap-1 mb-3">
                                 <button
                                     onClick={() => { setModalTab('festif'); setSearchTerm(''); }}
                                     className={`flex-1 py-1.5 px-3 text-sm font-medium transition border ${
@@ -752,75 +730,80 @@ const StorageMap = ({ darkMode }) => {
                             </div>
                         </div>
 
-                        <div className="flex-1 overflow-y-auto p-2">
-                            <div className="space-y-1">
-                                <button
-                                    onClick={() => handleAssignProduct({ prod_code: null })}
-                                    className="w-full text-left px-4 py-3 rounded hover:bg-red-50 dark:hover:bg-red-900/20 text-red-600 dark:text-red-400 flex justify-between items-center group"
-                                >
-                                    <span>Vider l'emplacement</span>
-                                    <X className="w-4 h-4 opacity-0 group-hover:opacity-100" />
-                                </button>
-                                {filteredProducts.map(product => {
-                                    const qty = product.prevision_colis || 0;
-                                    let priorityBadge = null;
-                                    let priorityColor = '';
+                        <div className="flex-1 overflow-y-auto">
+                            {/* Bouton Vider l'emplacement */}
+                            <button
+                                onClick={() => handleAssignProduct({ prod_code: null })}
+                                className="w-full text-left px-4 py-2 bg-red-50 dark:bg-red-950/20 hover:bg-red-100 dark:hover:bg-red-900/30 text-red-700 dark:text-red-400 flex justify-between items-center group border-b-2 border-red-200 dark:border-red-900"
+                            >
+                                <span className="text-sm font-medium">Vider l'emplacement</span>
+                                <X className="w-4 h-4 opacity-0 group-hover:opacity-100" />
+                            </button>
 
-                                    if (modalTab === 'festif' && qty > 0) {
-                                        if (qty >= 3000) {
-                                            priorityBadge = 'CRITIQUE';
-                                            priorityColor = 'bg-red-50 dark:bg-red-950 text-red-900 dark:text-red-300 border border-red-200 dark:border-red-800';
-                                        } else if (qty >= 1000) {
-                                            priorityBadge = 'ÉLEVÉE';
-                                            priorityColor = 'bg-orange-50 dark:bg-orange-950 text-orange-900 dark:text-orange-300 border border-orange-200 dark:border-orange-800';
-                                        } else if (qty >= 300) {
-                                            priorityBadge = 'MOYENNE';
-                                            priorityColor = 'bg-yellow-50 dark:bg-yellow-950 text-yellow-900 dark:text-yellow-300 border border-yellow-200 dark:border-yellow-800';
-                                        } else {
-                                            priorityBadge = 'STANDARD';
-                                            priorityColor = 'bg-slate-50 dark:bg-slate-900 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700';
+                            {/* Tableau HTML */}
+                            <table className="w-full text-sm">
+                                <thead className="sticky top-0 bg-slate-100 dark:bg-slate-800 border-b-2 border-slate-300 dark:border-slate-600">
+                                    <tr>
+                                        <th className="text-left px-3 py-2 font-mono font-bold text-xs uppercase tracking-wide text-slate-700 dark:text-slate-300">Code</th>
+                                        <th className="text-left px-3 py-2 font-mono font-bold text-xs uppercase tracking-wide text-slate-700 dark:text-slate-300">Produit</th>
+                                        {modalTab === 'festif' && (
+                                            <>
+                                                <th className="text-right px-3 py-2 font-mono font-bold text-xs uppercase tracking-wide text-slate-700 dark:text-slate-300">Quantité</th>
+                                                <th className="text-center px-3 py-2 font-mono font-bold text-xs uppercase tracking-wide text-slate-700 dark:text-slate-300">Priorité</th>
+                                            </>
+                                        )}
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {filteredProducts.map(product => {
+                                        const qty = product.prevision_colis || 0;
+                                        let priorityBadge = null;
+                                        let priorityColor = '';
+
+                                        if (modalTab === 'festif' && qty > 0) {
+                                            // Badges ROUGE pour produits festifs selon priorité
+                                            if (qty >= 3000) {
+                                                priorityBadge = 'CRITIQUE';
+                                                priorityColor = 'bg-red-100 dark:bg-red-950 text-red-950 dark:text-red-200 border border-red-300 dark:border-red-800';
+                                            } else if (qty >= 1000) {
+                                                priorityBadge = 'ÉLEVÉE';
+                                                priorityColor = 'bg-red-50 dark:bg-red-900 text-red-900 dark:text-red-300 border border-red-200 dark:border-red-700';
+                                            } else if (qty >= 300) {
+                                                priorityBadge = 'MOYENNE';
+                                                priorityColor = 'bg-red-50 dark:bg-red-950/50 text-red-800 dark:text-red-400 border border-red-200 dark:border-red-800';
+                                            } else {
+                                                priorityBadge = 'STANDARD';
+                                                priorityColor = 'bg-red-50/50 dark:bg-red-950/30 text-red-700 dark:text-red-400 border border-red-100 dark:border-red-900';
+                                            }
                                         }
-                                    }
 
-                                    return (
-                                        <button
-                                            key={product.id || product.prod_code}
-                                            onClick={() => handleAssignProduct(product)}
-                                            className="w-full text-left px-4 py-3 rounded hover:bg-gray-50 dark:hover:bg-gray-700 flex gap-4 items-center border-b dark:border-gray-700 last:border-b-0"
-                                        >
-                                            <div className="flex-1 min-w-0">
-                                                <div className="text-sm text-slate-900 dark:text-slate-100 mb-0.5 truncate">
-                                                    {product.prod_lib}
-                                                </div>
-                                                <div className="flex items-center gap-1.5">
-                                                    <span className="text-[11px] font-mono text-slate-500 dark:text-slate-400">
-                                                        {product.prod_code}
-                                                    </span>
-                                                </div>
-                                            </div>
-                                            <div className="flex flex-col items-end gap-1.5 flex-shrink-0">
-                                                {modalTab === 'festif' && product.prevision_colis > 0 && (
+                                        return (
+                                            <tr
+                                                key={product.id || product.prod_code}
+                                                onClick={() => handleAssignProduct(product)}
+                                                className="cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-700 border-b border-slate-200 dark:border-slate-700"
+                                            >
+                                                <td className="px-3 py-2 font-mono text-xs text-slate-600 dark:text-slate-400">{product.prod_code}</td>
+                                                <td className="px-3 py-2 text-slate-900 dark:text-slate-100 truncate max-w-[300px]">{product.prod_lib}</td>
+                                                {modalTab === 'festif' && (
                                                     <>
-                                                        <div className="text-base font-mono bg-slate-50 dark:bg-slate-900 px-3 py-1 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-100">
-                                                            {product.prevision_colis.toLocaleString()}
-                                                        </div>
-                                                        {priorityBadge && (
-                                                            <div className={`text-[10px] font-medium px-2 py-0.5 uppercase tracking-wide ${priorityColor}`}>
-                                                                {priorityBadge}
-                                                            </div>
-                                                        )}
+                                                        <td className="px-3 py-2 text-right font-mono text-slate-900 dark:text-slate-100">
+                                                            {product.prevision_colis ? product.prevision_colis.toLocaleString() : '—'}
+                                                        </td>
+                                                        <td className="px-3 py-2 text-center">
+                                                            {priorityBadge && (
+                                                                <span className={`text-[10px] font-medium px-2 py-0.5 uppercase tracking-wide inline-block ${priorityColor}`}>
+                                                                    {priorityBadge}
+                                                                </span>
+                                                            )}
+                                                        </td>
                                                     </>
                                                 )}
-                                                {product.quantity && (
-                                                    <div className="text-[11px] font-mono bg-slate-100 dark:bg-slate-800 px-2 py-0.5 text-slate-600 dark:text-slate-400">
-                                                        Stock: {product.quantity}
-                                                    </div>
-                                                )}
-                                            </div>
-                                        </button>
-                                    );
-                                })}
-                            </div>
+                                            </tr>
+                                        );
+                                    })}
+                                </tbody>
+                            </table>
                         </div>
                     </div>
                 </div>
