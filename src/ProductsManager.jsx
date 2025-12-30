@@ -241,6 +241,26 @@ export default function ProductsManager({ darkMode }) {
         }
     };
 
+    const getTypeColor = (type) => {
+        // Couleurs prédéfinies pour certains types
+        const colorMap = {
+            'festif': { bg: 'bg-red-50 dark:bg-red-950', text: 'text-red-900 dark:text-red-300', border: 'border-red-200 dark:border-red-800' },
+            'non_festif': { bg: 'bg-green-50 dark:bg-green-950', text: 'text-green-900 dark:text-green-300', border: 'border-green-200 dark:border-green-800' }
+        };
+
+        // Si le type a une couleur prédéfinie, l'utiliser
+        if (colorMap[type]) {
+            return colorMap[type];
+        }
+
+        // Sinon, utiliser une couleur neutre (bleu/slate)
+        return {
+            bg: 'bg-blue-50 dark:bg-blue-950',
+            text: 'text-blue-900 dark:text-blue-300',
+            border: 'border-blue-200 dark:border-blue-800'
+        };
+    };
+
     const exportDuplicatesToCSV = () => {
         if (duplicates.length === 0) {
             alert('Aucun doublon détecté');
@@ -332,8 +352,9 @@ export default function ProductsManager({ darkMode }) {
                             className="px-3 py-1.5 text-sm border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-1 focus:ring-slate-400 dark:focus:ring-slate-500 font-mono"
                         >
                             <option value="all">TOUS</option>
-                            <option value="festif">FESTIF</option>
-                            <option value="non_festif">NON-FESTIF</option>
+                            {availableTypes.map(type => (
+                                <option key={type} value={type}>{type.toUpperCase()}</option>
+                            ))}
                         </select>
                     </div>
                     <div className="flex gap-2">
@@ -386,13 +407,14 @@ export default function ProductsManager({ darkMode }) {
                                     <td className="px-3 py-2 font-mono text-xs text-slate-600 dark:text-slate-400">{product.prod_code}</td>
                                     <td className="px-3 py-2 text-slate-900 dark:text-slate-100">{product.prod_lib}</td>
                                     <td className="px-3 py-2 text-center">
-                                        <span className={`inline-block px-2 py-0.5 text-xs font-medium border ${
-                                            product.type === 'festif'
-                                                ? 'bg-red-50 dark:bg-red-950 text-red-900 dark:text-red-300 border-red-200 dark:border-red-800'
-                                                : 'bg-green-50 dark:bg-green-950 text-green-900 dark:text-green-300 border-green-200 dark:border-green-800'
-                                        }`}>
-                                            {product.type === 'festif' ? 'Festif' : 'Non-festif'}
-                                        </span>
+                                        {(() => {
+                                            const colors = getTypeColor(product.type);
+                                            return (
+                                                <span className={`inline-block px-2 py-0.5 text-xs font-medium border ${colors.bg} ${colors.text} ${colors.border}`}>
+                                                    {product.type}
+                                                </span>
+                                            );
+                                        })()}
                                     </td>
                                     <td className="px-3 py-2 text-right font-mono text-slate-900 dark:text-slate-100">
                                         {prevision ? prevision.prevision_colis.toLocaleString() : '—'}
