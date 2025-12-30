@@ -15,6 +15,8 @@ export default function ProductsManager({ darkMode }) {
     const [sortBy, setSortBy] = useState('code'); // 'code', 'name', 'prevision-asc', 'prevision-desc'
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [editingProduct, setEditingProduct] = useState(null);
+    const [showNewTypeInput, setShowNewTypeInput] = useState(false);
+    const [newTypeName, setNewTypeName] = useState('');
     const [formData, setFormData] = useState({
         prod_code: '',
         prod_lib: '',
@@ -63,6 +65,15 @@ export default function ProductsManager({ darkMode }) {
         });
 
         return dupes;
+    }, [products]);
+
+    // Liste unique des types de produits
+    const availableTypes = useMemo(() => {
+        const types = new Set();
+        products.forEach(p => {
+            if (p.type) types.add(p.type);
+        });
+        return Array.from(types).sort();
     }, [products]);
 
     const filteredProducts = useMemo(() => {
@@ -116,12 +127,35 @@ export default function ProductsManager({ darkMode }) {
             setFormData({
                 prod_code: '',
                 prod_lib: '',
-                type: 'festif',
+                type: availableTypes.length > 0 ? availableTypes[0] : 'festif',
                 prevision_colis: 0,
                 quantity: 0
             });
         }
+        setShowNewTypeInput(false);
+        setNewTypeName('');
         setIsModalOpen(true);
+    };
+
+    const handleTypeChange = (value) => {
+        if (value === '__new__') {
+            setShowNewTypeInput(true);
+            setNewTypeName('');
+        } else {
+            setShowNewTypeInput(false);
+            setFormData({ ...formData, type: value });
+        }
+    };
+
+    const handleAddNewType = () => {
+        const trimmedType = newTypeName.trim();
+        if (!trimmedType) {
+            alert('Le nom du type ne peut pas être vide');
+            return;
+        }
+        setFormData({ ...formData, type: trimmedType });
+        setShowNewTypeInput(false);
+        setNewTypeName('');
     };
 
     const handleSave = async () => {
@@ -426,14 +460,47 @@ export default function ProductsManager({ darkMode }) {
 
                             <div>
                                 <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">Type *</label>
-                                <select
-                                    value={formData.type}
-                                    onChange={(e) => setFormData({ ...formData, type: e.target.value })}
-                                    className="w-full px-3 py-2 text-sm border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-1 focus:ring-slate-400 dark:focus:ring-slate-500"
-                                >
-                                    <option value="festif">Festif</option>
-                                    <option value="non_festif">Non-festif</option>
-                                </select>
+                                {!showNewTypeInput ? (
+                                    <select
+                                        value={formData.type}
+                                        onChange={(e) => handleTypeChange(e.target.value)}
+                                        className="w-full px-3 py-2 text-sm border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-1 focus:ring-slate-400 dark:focus:ring-slate-500"
+                                    >
+                                        {availableTypes.map(type => (
+                                            <option key={type} value={type}>{type}</option>
+                                        ))}
+                                        <option value="__new__">+ Ajouter un type</option>
+                                    </select>
+                                ) : (
+                                    <div className="flex gap-2">
+                                        <input
+                                            type="text"
+                                            value={newTypeName}
+                                            onChange={(e) => setNewTypeName(e.target.value)}
+                                            onKeyDown={(e) => {
+                                                if (e.key === 'Enter') handleAddNewType();
+                                                if (e.key === 'Escape') setShowNewTypeInput(false);
+                                            }}
+                                            className="flex-1 px-3 py-2 text-sm border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-1 focus:ring-slate-400 dark:focus:ring-slate-500"
+                                            placeholder="Nom du nouveau type..."
+                                            autoFocus
+                                        />
+                                        <button
+                                            onClick={handleAddNewType}
+                                            className="px-3 py-2 text-sm bg-slate-700 dark:bg-slate-600 text-white hover:bg-slate-800 dark:hover:bg-slate-500 border border-slate-700 dark:border-slate-600"
+                                            title="Ajouter"
+                                        >
+                                            <Plus className="w-4 h-4" />
+                                        </button>
+                                        <button
+                                            onClick={() => setShowNewTypeInput(false)}
+                                            className="px-3 py-2 text-sm bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-300 dark:hover:bg-slate-600 border border-slate-300 dark:border-slate-600"
+                                            title="Annuler"
+                                        >
+                                            <X className="w-4 h-4" />
+                                        </button>
+                                    </div>
+                                )}
                             </div>
 
                             {formData.type === 'festif' && (
