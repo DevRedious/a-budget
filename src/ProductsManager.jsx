@@ -157,7 +157,7 @@ export default function ProductsManager({ darkMode }) {
         }
         console.log('➕ Ajout nouveau type:', trimmedType);
         setFormData({ ...formData, type: trimmedType });
-        setShowNewTypeInput(false);
+        // Ne pas cacher l'input, juste vider le champ pour montrer qu'il a été ajouté
         setNewTypeName('');
     };
 
