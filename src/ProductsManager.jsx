@@ -155,6 +155,7 @@ export default function ProductsManager({ darkMode }) {
             alert('Le nom du type ne peut pas être vide');
             return;
         }
+        console.log('➕ Ajout nouveau type:', trimmedType);
         setFormData({ ...formData, type: trimmedType });
         setShowNewTypeInput(false);
         setNewTypeName('');
@@ -500,33 +501,38 @@ export default function ProductsManager({ darkMode }) {
                                         <option value="__new__">+ Ajouter un type</option>
                                     </select>
                                 ) : (
-                                    <div className="flex gap-2">
-                                        <input
-                                            type="text"
-                                            value={newTypeName}
-                                            onChange={(e) => setNewTypeName(e.target.value)}
-                                            onKeyDown={(e) => {
-                                                if (e.key === 'Enter') handleAddNewType();
-                                                if (e.key === 'Escape') setShowNewTypeInput(false);
-                                            }}
-                                            className="flex-1 px-3 py-2 text-sm border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-1 focus:ring-slate-400 dark:focus:ring-slate-500"
-                                            placeholder="Nom du nouveau type..."
-                                            autoFocus
-                                        />
-                                        <button
-                                            onClick={handleAddNewType}
-                                            className="px-3 py-2 text-sm bg-slate-700 dark:bg-slate-600 text-white hover:bg-slate-800 dark:hover:bg-slate-500 border border-slate-700 dark:border-slate-600"
-                                            title="Ajouter"
-                                        >
-                                            <Plus className="w-4 h-4" />
-                                        </button>
-                                        <button
-                                            onClick={() => setShowNewTypeInput(false)}
-                                            className="px-3 py-2 text-sm bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-300 dark:hover:bg-slate-600 border border-slate-300 dark:border-slate-600"
-                                            title="Annuler"
-                                        >
-                                            <X className="w-4 h-4" />
-                                        </button>
+                                    <div className="space-y-2">
+                                        <div className="flex gap-2">
+                                            <input
+                                                type="text"
+                                                value={newTypeName}
+                                                onChange={(e) => setNewTypeName(e.target.value)}
+                                                onKeyDown={(e) => {
+                                                    if (e.key === 'Enter') handleAddNewType();
+                                                    if (e.key === 'Escape') setShowNewTypeInput(false);
+                                                }}
+                                                className="flex-1 px-3 py-2 text-sm border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-1 focus:ring-slate-400 dark:focus:ring-slate-500"
+                                                placeholder="Nom du nouveau type..."
+                                                autoFocus
+                                            />
+                                            <button
+                                                onClick={handleAddNewType}
+                                                className="px-3 py-2 text-sm bg-slate-700 dark:bg-slate-600 text-white hover:bg-slate-800 dark:hover:bg-slate-500 border border-slate-700 dark:border-slate-600"
+                                                title="Ajouter"
+                                            >
+                                                <Plus className="w-4 h-4" />
+                                            </button>
+                                            <button
+                                                onClick={() => setShowNewTypeInput(false)}
+                                                className="px-3 py-2 text-sm bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-300 dark:hover:bg-slate-600 border border-slate-300 dark:border-slate-600"
+                                                title="Annuler"
+                                            >
+                                                <X className="w-4 h-4" />
+                                            </button>
+                                        </div>
+                                        <div className="text-xs text-slate-500 dark:text-slate-400">
+                                            Type actuel: <span className="font-mono font-semibold text-slate-700 dark:text-slate-300">{formData.type}</span>
+                                        </div>
                                     </div>
                                 )}
                             </div>
