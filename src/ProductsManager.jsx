@@ -36,6 +36,8 @@ export default function ProductsManager({ darkMode }) {
                 loadPickingProducts(),
                 getPrevisionsFestif2025()
             ]);
+            console.log('📦 Produits chargés:', productsData.length);
+            console.log('📊 Types trouvés:', [...new Set(productsData.map(p => p.type))]);
             setProducts(productsData);
             setPrevisions(previsionsData);
         } catch (error) {
@@ -69,7 +71,7 @@ export default function ProductsManager({ darkMode }) {
 
     // Liste unique des types de produits
     const availableTypes = useMemo(() => {
-        const types = new Set();
+        const types = new Set(['festif', 'non_festif']); // Types par défaut
         products.forEach(p => {
             if (p.type) types.add(p.type);
         });
@@ -165,6 +167,8 @@ export default function ProductsManager({ darkMode }) {
                 return;
             }
 
+            console.log('💾 Sauvegarde produit avec type:', formData.type);
+
             if (editingProduct) {
                 // Mise à jour produit existant
                 const productRef = doc(db, 'pickingProducts', editingProduct.id);
@@ -174,6 +178,7 @@ export default function ProductsManager({ darkMode }) {
                     type: formData.type,
                     quantity: Number(formData.quantity)
                 });
+                console.log('✅ Produit mis à jour avec type:', formData.type);
 
                 // Si festif, mettre à jour prévision
                 if (formData.type === 'festif') {
@@ -201,6 +206,7 @@ export default function ProductsManager({ darkMode }) {
                     type: formData.type,
                     quantity: Number(formData.quantity)
                 });
+                console.log('✅ Nouveau produit créé avec type:', formData.type);
 
                 // Si festif, ajouter prévision
                 if (formData.type === 'festif') {
